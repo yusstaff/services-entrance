@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  services-entrance:
+    ports:
+      - 5571:5571
+      - 5572:5572
+    volumes:
+      - ./backend:/app/backend
+      - ./entrypoint.sh:/app/entrypoint.sh
+      - ./:/app-dev
+    command: [ "sh", "-c", "sleep infinity" ]
+
+  certbot:
+    volumes:
+      - ./:/app-dev
+    entrypoint: "/bin/sh -c 'sleep infinity'"

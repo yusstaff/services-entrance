@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  services-entrance:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: "ykw/services-entrance"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE #optional
+    ports:
+      - 80:80
+      - 443:443
+      - 51820:51820/udp
+    container_name: ykw-services-entrance
+    shm_size: 1gb
+    env_file:
+      - ./config/peers.env
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Tokyo
+      - SERVERURL=auto #optional
+      - SERVERPORT=51820 #optional
+      - PEERDNS=auto #optional
+      - INTERNAL_SUBNET=10.13.13.0 #optional
+      - ALLOWEDIPS=0.0.0.0/0 #optional
+      - PERSISTENTKEEPALIVE_PEERS= #optional
+      - LOG_CONFS=true #optional
+    volumes:
+      - ./config:/config
+      - ./certs:/etc/letsencrypt
+      - /lib/modules:/lib/modules #optional
+    networks:
+      - ykw-network
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+    command: [ "sh", "-c", "./entrypoint.sh; sleep infinity" ]
+
+  certbot:
+    image: certbot/dns-cloudflare:latest
+    container_name: ykw-certbot
+    volumes:
+      - ./certbot:/app/certbot
+      - ./config:/config
+      - ./certs:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+    networks:
+      - ykw-network
+    entrypoint: "/bin/sh -c 'cd /app; chmod +x certbot/entrypoint.sh; certbot/entrypoint.sh; sleep infinity'"
+    restart: unless-stopped
+
+  openvpn-as:
+    image: ghcr.io/linuxserver/openvpn-as
+    container_name: ykw-openvpn-as
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Tokyo
+      - INTERFACE=eth0 #optional
+    volumes:
+      - ./config/openvpn:/config
+    networks:
+      - ykw-network
+    ports:
+      - 943:943
+      - 9443:9443
+      - 1194:1194/udp
+    restart: unless-stopped
+
+networks:
+  ykw-network:
+    driver: bridge

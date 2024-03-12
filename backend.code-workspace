@@ -1,0 +1,49 @@
+{
+	"folders": [
+		{
+			"name": "app",
+			"path": "../app"
+		},
+		{
+			"name": "app-dev",
+			"path": "."
+		},
+		{
+			"name": "backend",
+			"path": "backend"
+		},
+		{
+			"path": "config"
+		},
+		{
+			"name": "certificates",
+			"path": "certs"
+		},
+		{
+			"name": "logs",
+			"path": "/app/log"
+		}
+	],
+	"settings": {
+		"explorerExclude.backup": {},
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/CVS": true,
+			"**/.DS_Store": true,
+			"**/Thumbs.db": true,
+			"**/__pycache__": true,
+			"**/.quasar": true,
+			"**/postcss.config.cjs": true,
+			"**/.eslintignore": true,
+			"**/.editorconfig": true,
+			"**/.eslintrc.cjs": true,
+			"**/.prettierrc": true,
+			"**/package-lock.json": true,
+			"**/.npmrc": true,
+			"**/package.json": true,
+			"**/index.html": true
+		}
+	}
+}

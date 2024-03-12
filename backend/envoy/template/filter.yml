@@ -1,0 +1,15 @@
+name: envoy.filters.network.http_connection_manager
+typed_config:
+  "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+  stat_prefix: ingress_http
+  http_filters:
+  - name: envoy.filters.http.buffer
+    typed_config:
+      "@type": type.googleapis.com/envoy.extensions.filters.http.buffer.v3.Buffer
+      max_request_bytes: 16384
+  - name: envoy.filters.http.router
+    typed_config:
+      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  route_config:
+    name: local_route
+    virtual_hosts: []

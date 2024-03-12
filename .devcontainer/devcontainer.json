@@ -1,0 +1,46 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/python-3
+{
+  "name": "services-entrance",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "docker-compose.yml"
+  ],
+  "service": "services-entrance",
+  "runServices": ["services-entrance", "certbot", "openvpn-as"],
+  "workspaceFolder": "/app",
+
+  // Configure tool-specific properties.
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "peterschmalfeldt.explorer-exclude",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.autopep8",
+        "amazonwebservices.aws-toolkit-vscode",
+        "ms-python.flake8",
+        "esbenp.prettier-vscode",
+        "vue.volar",
+        "esbenp.prettier-vscode",
+        "editorconfig.editorconfig",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [],
+
+  // Use 'postCreateCommand' to run commands after the container is created.
+  // "postCreateCommand": "pip3 install --user -r requirements.txt",
+
+  // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  "remoteUser": "root",
+  "features": {
+    // "git": "os-provided"
+  }
+}

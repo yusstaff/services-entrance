@@ -1,0 +1,13 @@
+name: ""
+type: LOGICAL_DNS
+# Comment out the following line to test on v6 networks
+dns_lookup_family: V4_ONLY
+connect_timeout: 5s
+http2_protocol_options: {}
+load_assignment:
+  cluster_name: ""
+  endpoints: []
+transport_socket:
+  name: envoy.transport_sockets.tls
+  typed_config:
+    "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
