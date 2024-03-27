@@ -349,7 +349,7 @@ onUnmounted(() => {
                 dense
                 class="bg-red-4 col-1"
                 style="text-transform: none !important"
-                @click="deleteServerName(filterChain, fcIdx)"
+                @click="deleteServerName(filterChain, snIdx)"
               ></q-btn>
             </q-card-section>
           </template>
