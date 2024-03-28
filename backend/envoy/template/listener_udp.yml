@@ -1,0 +1,18 @@
+name: udp_listener
+address:
+  socket_address:
+    protocol: UDP
+    address: 0.0.0.0
+    port_value: 54321
+reuse_port:  true
+udp_listener_config:
+  downstream_socket_config:
+    max_rx_datagram_size: 9000
+listener_filters:
+- name: envoy.filters.udp_listener.udp_proxy
+  typed_config:
+    '@type': type.googleapis.com/envoy.extensions.filters.udp.udp_proxy.v3.UdpProxyConfig
+    stat_prefix: service
+    cluster: ""
+    upstream_socket_config:
+      max_rx_datagram_size: 9000

@@ -25,6 +25,11 @@ export interface ListenerHTTP extends Listener {
   filters: Filter[];
 }
 
+export interface ListenerTCPUDP extends Listener {
+  port_value: number;
+  cluster: string;
+}
+
 export interface LbEndpoint {
   address: string;
   port_value: number;
@@ -54,3 +59,11 @@ export default interface Config {
   static_resources: StaticResources;
   admin: Admin;
 }
+
+export const DOWNSTREAM_PROTOCOLS = ['HTTP/HTTPS', 'TCP/UDP', 'TCP', 'UDP'];
+export const UPSTREAM_PROTOCOLS = [
+  'HTTP/1.1',
+  'HTTPS/1.1',
+  'HTTP/2',
+  'TCP/UDP',
+];

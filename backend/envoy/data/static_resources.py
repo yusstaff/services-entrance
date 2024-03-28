@@ -7,6 +7,7 @@ import yaml
 from envoy.data.cluster import Cluster
 from envoy.data.listener import Listener, ListenerType
 from envoy.data.listener_http import ListenerHTTP
+from envoy.data.listener_tcp_udp import ListenerTCPUDP
 
 TEMPLATE_PATH: Path = Path('/app/backend/envoy/template/static_resources.yml')
 with TEMPLATE_PATH.open() as file:
@@ -31,6 +32,10 @@ class StaticResources(object):
             listener_type: str = listener['type']
             if ListenerType.HTTP.value == listener_type:
                 listeners.append(ListenerHTTP.parse(listener))
+            elif (ListenerType.TCPUDP.value == listener_type
+                  or ListenerType.TCP.value == listener_type
+                  or ListenerType.UDP.value == listener_type):
+                listeners.append(ListenerTCPUDP.parse(listener))
 
         clusters: list[Cluster] = [Cluster.parse(cluster) for cluster in dic['clusters']]
 
@@ -42,7 +47,17 @@ class StaticResources(object):
         http_listeners: list[ListenerHTTP] = [
             listener for listener in self.listeners if ListenerType.HTTP.value == listener.type]
         http_filter_chains = [listener.toDict()['filter_chains'][0] for listener in http_listeners]
-        static_resources['listeners'][1]['filter_chains'] = http_filter_chains + static_resources['listeners'][1]['filter_chains']
+        static_resources['listeners'][1]['filter_chains'] = (
+            http_filter_chains + static_resources['listeners'][1]['filter_chains'])
+
+        tcp_udp_listeners: list[ListenerTCPUDP] = [listener for listener in self.listeners if (
+            ListenerType.TCPUDP.value == listener.type
+            or ListenerType.TCP.value == listener.type
+            or ListenerType.UDP.value == listener.type)]
+        static_resources['listeners'] = (static_resources['listeners'] +
+                                         [listener
+                                          for listeners in tcp_udp_listeners
+                                          for listener in listeners.toDict()])
 
         clusters = [cluster.toDict() for cluster in self.clusters]
         static_resources['clusters'] = static_resources['clusters'] + clusters
@@ -78,3 +93,22 @@ class StaticResources(object):
                         raise Exception(f'Cannot found cluster: {route.cluster}')
         if len(http_servers) != len(set(http_servers)):
             raise Exception('Duplicate server.')
+
+        tcp_listeners: list[ListenerTCPUDP] = [listener for listener in self.listeners if (
+            ListenerType.TCPUDP.value == listener.type
+            or ListenerType.TCP.value == listener.type)]
+        tcp_port: list[int] = [listener.port_value for listener in tcp_listeners]
+        if len(tcp_port) != len(set(tcp_port)):
+            raise Exception('Duplicate TCP port.')
+
+        udp_listeners: list[ListenerTCPUDP] = [listener for listener in self.listeners if (
+            ListenerType.TCPUDP.value == listener.type
+            or ListenerType.UDP.value == listener.type)]
+        udp_port: list[int] = [listener.port_value for listener in udp_listeners]
+        if len(udp_port) != len(set(udp_port)):
+            raise Exception('Duplicate UDP port.')
+
+        for listener in tcp_listeners + udp_listeners:
+            if listener.cluster in cluster_list:
+                continue
+            raise Exception(f'Cannot found cluster: {listener.cluster}')

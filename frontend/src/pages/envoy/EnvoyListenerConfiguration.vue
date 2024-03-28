@@ -3,14 +3,13 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import getDomains from 'api/certbot/request/get_domains';
 import getProxy from 'api/envoy/request/get_proxy';
 import Config, {
-  Listener,
+  DOWNSTREAM_PROTOCOLS,
   ListenerHTTP,
+  ListenerTCPUDP,
   VirtualHost,
 } from 'api/envoy/data/config';
 import modifyProxy from 'api/envoy/request/modify_proxy';
 import { Notify, QCardSection } from 'quasar';
-
-const PROTOCOLS = ['HTTP/HTTPS', 'TCP/UDP', 'TCP', 'UDP'];
 
 const config = ref<Config>();
 const domains = ref<string[]>();
@@ -56,7 +55,7 @@ function save() {
 function addListener() {
   if (config.value) {
     const listener = {
-      type: PROTOCOLS[0],
+      type: DOWNSTREAM_PROTOCOLS[0],
       server_names: [],
       domain: '',
       filters: [
@@ -74,6 +73,42 @@ function addListener() {
 
 function deleteListener(lIdx: number) {
   config.value?.static_resources.listeners.splice(lIdx, 1);
+}
+
+function onProtocolChanged(val: string, lIdx: number) {
+  if (config.value === undefined) {
+    return;
+  }
+  const listener = config.value.static_resources.listeners[lIdx];
+  if (listener.type !== val) {
+    if (val === DOWNSTREAM_PROTOCOLS[0]) {
+      const new_listener = {
+        type: val,
+        server_names: [],
+        domain: '',
+        filters: [
+          {
+            virtual_hosts: [],
+            max_request_bytes: '16K',
+          },
+        ],
+      };
+      addServerName(new_listener);
+      addVirtualHost(new_listener);
+      config.value.static_resources.listeners[lIdx] = new_listener;
+    } else if (
+      val === DOWNSTREAM_PROTOCOLS[1] ||
+      val === DOWNSTREAM_PROTOCOLS[2] ||
+      val === DOWNSTREAM_PROTOCOLS[3]
+    ) {
+      const new_listener = {
+        type: val,
+        port_value: 12345,
+        cluster: '',
+      };
+      config.value.static_resources.listeners[lIdx] = new_listener;
+    }
+  }
 }
 
 // server name
@@ -301,8 +336,8 @@ onUnmounted(() => {
             Listener
           </div>
           <q-select
-            v-model="listener.type"
-            :options="PROTOCOLS"
+            :model-value="listener.type"
+            :options="DOWNSTREAM_PROTOCOLS"
             label="Protocol"
             outlined
             borderless
@@ -310,9 +345,10 @@ onUnmounted(() => {
             dense
             bg-color="white"
             style="min-width: 120px"
+            @update:model-value="onProtocolChanged($event, lIdx)"
           ></q-select>
           <q-select
-            v-if="listener.type === PROTOCOLS[0]"
+            v-if="listener.type === DOWNSTREAM_PROTOCOLS[0]"
             v-model="(listener as ListenerHTTP).domain"
             :options="domains"
             label="Certificate"
@@ -337,7 +373,8 @@ onUnmounted(() => {
           </q-btn>
         </q-card-section>
 
-        <template v-if="listener.type === PROTOCOLS[0]">
+        <!-- HTTP -->
+        <template v-if="listener.type === DOWNSTREAM_PROTOCOLS[0]">
           <template v-if="(listener as ListenerHTTP).domain !== ''">
             <q-card-section class="bg-blue-2 q-pt-xs q-pb-xs row">
               <div class="text-bold text-center flex flex-center">
@@ -425,6 +462,7 @@ onUnmounted(() => {
                 </q-card-section>
               </q-card>
 
+              <!-- Virtual Hosts -->
               <template
                 v-for="(vh, vhIdx) in filter.virtual_hosts"
                 :key="vhIdx"
@@ -586,6 +624,52 @@ onUnmounted(() => {
               </template>
             </q-card-section>
           </template>
+        </template>
+
+        <!-- TCP/UDP -->
+        <template
+          v-else-if="
+            listener.type === DOWNSTREAM_PROTOCOLS[1] ||
+            listener.type === DOWNSTREAM_PROTOCOLS[2] ||
+            listener.type === DOWNSTREAM_PROTOCOLS[3]
+          "
+        >
+          <q-card-section class="bg-blue-1 row">
+            <!-- params -->
+            <q-card class="q-mb-sm col-12">
+              <q-card-section class="bg-orange-1 q-pt-sm q-pb-sm row">
+                <div class="text-bold text-center flex flex-center">
+                  Parameters
+                </div>
+                <q-space></q-space>
+              </q-card-section>
+              <q-card-section class="bg-grey-2 q-pt-xs q-pb-xs row">
+                <!-- Port -->
+                <q-input
+                  v-model:model-value="(listener as ListenerTCPUDP).port_value"
+                  type="number"
+                  label="Port"
+                  dense
+                  outlined
+                  bgColor="white"
+                  class="q-pl-sm q-pr-sm col-7"
+                ></q-input>
+                <!-- Cluster -->
+                <q-select
+                  v-model="(listener as ListenerTCPUDP).cluster"
+                  :options="allClusters"
+                  label="Cluster"
+                  outlined
+                  borderless
+                  rounded
+                  dense
+                  bg-color="white"
+                  class="q-pl-sm q-pr-sm col-4"
+                ></q-select>
+                <q-space></q-space>
+              </q-card-section>
+            </q-card>
+          </q-card-section>
         </template>
       </q-card>
     </q-card-section>

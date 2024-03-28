@@ -1,53 +1,88 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import getProxy from 'api/envoy/request/get_proxy';
-import Config, { Cluster, Endpoint, Route } from 'api/envoy/data/config';
+import Config, {
+  Cluster,
+  DOWNSTREAM_PROTOCOLS,
+  Endpoint,
+  ListenerHTTP,
+  ListenerTCPUDP,
+  Route,
+  UPSTREAM_PROTOCOLS,
+} from 'api/envoy/data/config';
 import modifyProxy from 'api/envoy/request/modify_proxy';
 import { Notify } from 'quasar';
 
 const config = ref<Config>();
-const protocols = ref<string[]>(['HTTP/1.1', 'HTTPS/1.1', 'HTTP/2']);
 const clustersBeingUsed = computed(() => {
   if (config.value) {
     const clusters: string[] = [];
-    config.value.static_resources.filter_chains.forEach((chain) => {
-      chain.filters.forEach((filter) => {
-        filter.virtual_hosts.forEach((virtual_host) => {
-          virtual_host.routes.forEach((route) => {
-            clusters.push(route.cluster);
+    config.value.static_resources.listeners.forEach((listener) => {
+      if (listener.type === DOWNSTREAM_PROTOCOLS[0]) {
+        (listener as ListenerHTTP).filters.forEach((filter) => {
+          filter.virtual_hosts.forEach((virtual_host) => {
+            virtual_host.routes.forEach((route) => {
+              clusters.push(route.cluster);
+            });
           });
         });
-      });
+      } else if (
+        listener.type === DOWNSTREAM_PROTOCOLS[1] ||
+        listener.type === DOWNSTREAM_PROTOCOLS[2] ||
+        listener.type === DOWNSTREAM_PROTOCOLS[2]
+      ) {
+        clusters.push((listener as ListenerTCPUDP).cluster);
+      }
     });
     return clusters;
   } else {
     return [];
   }
 });
+
 const clusterRouteMap = new Map<Cluster, Route[]>();
+const clusterTcpUdpListenerMap = new Map<Cluster, ListenerTCPUDP[]>();
 
 function fetchData() {
   getProxy().then((res) => {
     config.value = res.data.config;
 
-    config.value.static_resources.filter_chains.forEach((chain) => {
-      chain.filters.forEach((filter) => {
-        filter.virtual_hosts.forEach((virtual_host) => {
-          virtual_host.routes.forEach((route) => {
-            const cluster = config.value?.static_resources.clusters.find(
-              (c) => c.name === route.cluster
-            );
-            if (cluster) {
-              const routes = clusterRouteMap.get(cluster);
-              if (routes) {
-                routes.push(route);
-              } else {
-                clusterRouteMap.set(cluster, [route]);
+    config.value.static_resources.listeners.forEach((listener) => {
+      if (listener.type === DOWNSTREAM_PROTOCOLS[0]) {
+        (listener as ListenerHTTP).filters.forEach((filter) => {
+          filter.virtual_hosts.forEach((virtual_host) => {
+            virtual_host.routes.forEach((route) => {
+              const cluster = config.value?.static_resources.clusters.find(
+                (c) => c.name === route.cluster
+              );
+              if (cluster) {
+                const routes = clusterRouteMap.get(cluster);
+                if (routes) {
+                  routes.push(route);
+                } else {
+                  clusterRouteMap.set(cluster, [route]);
+                }
               }
-            }
+            });
           });
         });
-      });
+      } else if (
+        listener.type === DOWNSTREAM_PROTOCOLS[1] ||
+        listener.type === DOWNSTREAM_PROTOCOLS[2] ||
+        listener.type === DOWNSTREAM_PROTOCOLS[2]
+      ) {
+        const cluster = config.value?.static_resources.clusters.find(
+          (c) => c.name === (listener as ListenerTCPUDP).cluster
+        );
+        if (cluster) {
+          const tcp_udp_listeners = clusterTcpUdpListenerMap.get(cluster);
+          if (tcp_udp_listeners) {
+            tcp_udp_listeners.push(listener as ListenerTCPUDP);
+          } else {
+            clusterTcpUdpListenerMap.set(cluster, [listener as ListenerTCPUDP]);
+          }
+        }
+      }
     });
   });
 }
@@ -70,7 +105,7 @@ function addCluster() {
   const cluster = {
     name: '',
     endpoints: [],
-    protocol: 'HTTP/2',
+    protocol: UPSTREAM_PROTOCOLS[2],
   };
   addEndpoint(cluster);
   config.value?.static_resources.clusters.unshift(cluster);
@@ -109,6 +144,12 @@ function onClusterNameUpdated(val: string | undefined, cluster: Cluster) {
     if (routes) {
       routes.forEach((route) => {
         route.cluster = val;
+      });
+    }
+    const listeners = clusterTcpUdpListenerMap.get(cluster);
+    if (listeners) {
+      listeners.forEach((listener) => {
+        listener.cluster = val;
       });
     }
     cluster.name = val;
@@ -168,11 +209,13 @@ function onClusterNameUpdated(val: string | undefined, cluster: Cluster) {
           ></q-input>
           <q-select
             v-model="cluster.protocol"
-            :options="protocols"
+            :options="UPSTREAM_PROTOCOLS"
             outlined
+            rounded
             borderless
             dense
             bg-color="white"
+            style="min-width: 120px"
           ></q-select>
 
           <q-space></q-space>

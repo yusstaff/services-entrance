@@ -12,7 +12,7 @@ with TEMPLATE_PATH.open() as file:
     TEMPLATE: dict = yaml.safe_load(file)
 
 NAME_PATTERN = re.compile('^[a-zA-Z0-9_-]{3,20}')
-PROTOCAL_LIST = ['HTTP/1.1', 'HTTPS/1.1', 'HTTP/2']
+PROTOCAL_LIST = ['HTTP/1.1', 'HTTPS/1.1', 'HTTP/2', 'TCP/UDP']
 
 
 @dataclass
@@ -32,7 +32,7 @@ class Cluster(object):
         cluster['name'] = self.name
         cluster['load_assignment']['cluster_name'] = self.name
         cluster['load_assignment']['endpoints'] = [endpoint.toDict() for endpoint in self.endpoints]
-        if self.protocol == 'HTTP/1.1':
+        if self.protocol == 'HTTP/1.1' or self.protocol == 'TCP/UDP':
             cluster.pop('transport_socket')
             cluster.pop('http2_protocol_options')
         elif self.protocol == 'HTTPS/1.1':
