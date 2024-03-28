@@ -1,4 +1,3 @@
-
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -7,8 +6,9 @@ import re
 import yaml
 
 from envoy.data.filter import Filter
+from envoy.data.listener import Listener
 
-TEMPLATE_PATH: Path = Path('/app/backend/envoy/template/filter_chains.yml')
+TEMPLATE_PATH: Path = Path('/app/backend/envoy/template/listener_http.yml')
 with TEMPLATE_PATH.open() as file:
     TEMPLATE: dict = yaml.safe_load(file)
 
@@ -17,7 +17,7 @@ CERTIFICATE_PATTERN = re.compile(r'^(?:\*\.)?(?:[a-zA-Z0-9-]+\.)*[a-zA-Z]{2,}$')
 
 
 @dataclass
-class FilterChain(object):
+class ListenerHTTP(Listener):
     server_names: list[str] = field(default_factory=list)
     domain: str = ''
     filters: list[Filter] = field(default_factory=list)
@@ -25,11 +25,15 @@ class FilterChain(object):
     @staticmethod
     def parse(dic: dict = None):
         if not dic:
-            return FilterChain()
-        return FilterChain(dic['server_names'], dic['domain'], [Filter.parse(filter) for filter in dic['filters']])
+            return ListenerHTTP()
+        return ListenerHTTP(dic['type'],
+                            dic['server_names'],
+                            dic['domain'],
+                            [Filter.parse(filter) for filter in dic['filters']])
 
     def toDict(self) -> dict:
-        filter_chain = deepcopy(TEMPLATE)
+        listener = deepcopy(TEMPLATE)
+        filter_chain = listener['filter_chains'][0]
         filter_chain['transport_socket']['typed_config']['common_tls_context']['tls_certificates'][0] = {
             'certificate_chain': {
                 'filename': f'/etc/letsencrypt/live/{self.domain.replace("*.", "")}/fullchain.pem',
@@ -40,7 +44,7 @@ class FilterChain(object):
         }
         filter_chain['filter_chain_match']['server_names'] = self.server_names
         filter_chain['filters'] = [filter.toDict() for filter in self.filters]
-        return filter_chain
+        return listener
 
     def validate(self) -> None:
         if not self.domain:

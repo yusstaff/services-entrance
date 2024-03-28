@@ -15,7 +15,11 @@ export interface Filter {
   max_request_bytes: string;
 }
 
-export interface FilterChain {
+export interface Listener {
+  type: string;
+}
+
+export interface ListenerHTTP extends Listener {
   server_names: string[];
   domain: string;
   filters: Filter[];
@@ -37,7 +41,7 @@ export interface Cluster {
 }
 
 export interface StaticResources {
-  filter_chains: FilterChain[];
+  listeners: Listener[];
   clusters: Cluster[];
 }
 

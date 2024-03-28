@@ -26,7 +26,7 @@ class Config(object):
     @staticmethod
     def createExample():
         static_res = StaticResources.parse()
-        static_res.filter_chains = []
+        static_res.listeners = []
         static_res.clusters = []
 
         admin = Admin.parse()
@@ -40,10 +40,10 @@ class Config(object):
         return config
 
     def toDict(self) -> dict:
-        admin = deepcopy(TEMPLATE)
-        admin['static_resources'] = self.static_resources.toDict()
-        admin['admin'] = self.admin.toDict()
-        return admin
+        config = deepcopy(TEMPLATE)
+        config['static_resources'] = self.static_resources.toDict()
+        config['admin'] = self.admin.toDict()
+        return config
 
     def validate(self) -> None:
         self.static_resources.validate()
