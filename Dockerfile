@@ -40,3 +40,5 @@ RUN quasar build
 RUN chmod +x /app/entrypoint.sh
 
 WORKDIR /app
+
+ENTRYPOINT []
