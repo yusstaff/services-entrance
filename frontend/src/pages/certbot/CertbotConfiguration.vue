@@ -111,6 +111,9 @@ function onDeleteDomain() {
     v-model:pagination="pagination"
     v-model:selected="selected"
   >
+    <template #top-left>
+      <div class="text-bold text-h6 text-center flex flex-center">Certbot</div>
+    </template>
     <template #top-right>
       <q-tr>
         <q-td>
