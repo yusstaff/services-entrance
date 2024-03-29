@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Subnet from 'api/openvpn/data/subnet';
+import Subnet from 'api/data/subnet';
 import getSubnets from 'api/openvpn/request/get_subnets';
 import modifySubnets from 'api/openvpn/request/modify_subnets';
 import { Notify } from 'quasar';
@@ -88,6 +88,7 @@ function onDeleteSubnet(idx: number) {
         <q-input
           v-model="subnet.address"
           label="Address"
+          dense
           class="col-5"
         ></q-input>
         <q-space></q-space>
@@ -95,6 +96,7 @@ function onDeleteSubnet(idx: number) {
           v-model="subnet.cidr"
           label="CIDR"
           type="number"
+          dense
           class="col-4"
         ></q-input>
         <q-space></q-space>

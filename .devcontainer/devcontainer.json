@@ -7,7 +7,7 @@
     "docker-compose.yml"
   ],
   "service": "services-entrance",
-  "runServices": ["services-entrance", "certbot", "openvpn-as"],
+  "runServices": ["services-entrance", "certbot", "openvpn-as", "wireguard"],
   "workspaceFolder": "/app",
 
   // Configure tool-specific properties.

@@ -12,22 +12,8 @@ services:
     ports:
       - 80:80
       - 443:443
-      - 51820:51820/udp
     container_name: ykw-services-entrance
     shm_size: 1gb
-    env_file:
-      - ./config/peers.env
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Asia/Tokyo
-      - SERVERURL=auto #optional
-      - SERVERPORT=51820 #optional
-      - PEERDNS=auto #optional
-      - INTERNAL_SUBNET=10.13.13.0 #optional
-      - ALLOWEDIPS=0.0.0.0/0 #optional
-      - PERSISTENTKEEPALIVE_PEERS= #optional
-      - LOG_CONFS=true #optional
     volumes:
       - ./config:/config
       - ./certs:/etc/letsencrypt
@@ -71,6 +57,38 @@ services:
       - 943:943
       - 9443:9443
       - 1194:1194/udp
+    restart: unless-stopped
+
+  wireguard:
+    image: linuxserver/wireguard:1.0.20210914-legacy
+    container_name: "ykw-wireguard"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE #optional
+    ports:
+      - 51820:51820/udp
+    shm_size: 1gb
+    env_file:
+      - ./config/peers.env
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Tokyo
+      - SERVERURL=auto #optional
+      - SERVERPORT=51820 #optional
+      - PEERDNS=auto #optional
+      - INTERNAL_SUBNET=10.13.13.0 #optional
+      - ALLOWEDIPS=0.0.0.0/0 #optional
+      - PERSISTENTKEEPALIVE_PEERS= #optional
+      - LOG_CONFS=true #optional
+    volumes:
+      - ./config/wireguard:/config
+      - ./certs:/etc/letsencrypt
+      - /lib/modules:/lib/modules #optional
+    networks:
+      - ykw-network
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
     restart: unless-stopped
 
 networks:

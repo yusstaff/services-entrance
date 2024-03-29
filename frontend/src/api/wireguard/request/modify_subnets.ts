@@ -1,5 +1,5 @@
 import { api } from 'boot/axios';
-import API from 'api/openvpn/api';
+import API from 'api/wireguard/api';
 import Subnet from 'api/data/subnet';
 import { useCsrfStore } from 'stores/csrf';
 
