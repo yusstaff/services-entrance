@@ -150,6 +150,7 @@ function addRoute(virtualHost: VirtualHost) {
     prefix: '/',
     cluster: '',
     host_rewrite_literal: '',
+    max_stream_duration: 60,
   });
 }
 
@@ -582,9 +583,18 @@ onUnmounted(() => {
                         dense
                         outlined
                         bgColor="white"
-                        class="q-pl-sm q-pr-sm col-7"
+                        class="q-pl-sm q-pr-sm col-4"
                       ></q-input>
-
+                      <!-- Max Stream Duration -->
+                      <q-input
+                        v-model:model-value="route.max_stream_duration"
+                        label="Max Stream Duration"
+                        type="number"
+                        dense
+                        outlined
+                        bgColor="white"
+                        class="q-pl-sm q-pr-sm col-3"
+                      ></q-input>
                       <!-- Cluster -->
                       <q-select
                         v-model="route.cluster"

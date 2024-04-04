@@ -2,6 +2,7 @@ export interface Route {
   prefix: string;
   cluster: string;
   host_rewrite_literal: string;
+  max_stream_duration: number;
 }
 
 export interface VirtualHost {

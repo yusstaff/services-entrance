@@ -17,12 +17,17 @@ class Route(object):
     prefix: str = ''
     cluster: str = ''
     host_rewrite_literal: str = ''
+    max_stream_duration: int = 60
 
     @staticmethod
     def parse(dic: dict = None):
         if not dic:
             return Route()
-        return Route(dic['prefix'], dic['cluster'], dic['host_rewrite_literal'])
+        return Route(
+            dic['prefix'],
+            dic['cluster'],
+            dic['host_rewrite_literal'],
+            int(dic.get('max_stream_duration', 60)))
 
     def toDict(self) -> dict:
         route = deepcopy(TEMPLATE)
@@ -33,6 +38,7 @@ class Route(object):
         else:
             dic: dict = route['route']
             dic.pop('host_rewrite_literal')
+        route['route']['max_stream_duration']['max_stream_duration'] = f'{self.max_stream_duration}s'
 
         return route
 
@@ -41,3 +47,5 @@ class Route(object):
             raise Exception(f'Wrong prefix: {self.prefix}')
         if not self.cluster:
             raise Exception(f'Wrong cluster: {self.cluster}')
+        if self.max_stream_duration < 0:
+            raise Exception(f'Wrong timeout: {self.max_stream_duration}')
