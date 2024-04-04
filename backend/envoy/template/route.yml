@@ -3,5 +3,6 @@ match:
 route:
   cluster: ""
   host_rewrite_literal: ""
+  timeout: 600s
   max_stream_duration:
     max_stream_duration: 60s
