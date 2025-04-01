@@ -1,6 +1,16 @@
 #!/bin/sh
 
 cd /app/backend
+# Check if /config/gunicorn.pid exists and if the PID is running. If yes, delete the file.
+if [ -f "/config/gunicorn.pid" ]; then
+    pid=$(cat /config/gunicorn.pid)
+    if ps -p "$pid" > /dev/null 2>&1; then
+        echo "/config/gunicorn.pid is occupied by PID $pid. Deleting file."
+    else
+        echo "/config/gunicorn.pid is a stale file. Deleting file."
+    fi
+    rm /config/gunicorn.pid
+fi
 gunicorn -w 1 app:app -b 0.0.0.0:5571 --daemon --pid /config/gunicorn.pid --access-logfile /app/log/flask.log --error-logfile /app/log/flask.log
 
 touch /app/log/quasar.log
